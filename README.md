@@ -1,12 +1,14 @@
 # End-to-end Recovery of Human Shape and Pose
 
 This repository is adaptation of HMR model for our purposes, 
-based on [this project](https://akanazawa.github.io/hmr/).
+based on [this project](https://akanazawa.github.io/hmr/). 
+Unfortunately it doesn't run out of the box due to outdated code adn dependencies and we must to rewrite 
+some code and add utility methods. 
 
 ![Teaser Image](https://akanazawa.github.io/hmr/resources/images/teaser.png)
 
 ### Installation
-Use this preinstalled Docker image:
+Use this prepared Docker image:
 `https://hub.docker.com/r/dawars/hmr/`
 
 ### Demo
