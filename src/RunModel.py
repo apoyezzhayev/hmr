@@ -37,7 +37,8 @@ class RunModel(object):
 
         self.data_format = config.data_format
         self.smpl_model_path = config.smpl_model_path
-        
+
+
         input_size = (self.batch_size, self.img_size, self.img_size, 3)
         self.images_pl = tf.placeholder(tf.float32, shape=input_size)
 

@@ -2,7 +2,7 @@
 
 This repository is adaptation of HMR model for our purposes, 
 based on [this project](https://akanazawa.github.io/hmr/). 
-Unfortunately it doesn't run out of the box due to outdated code adn dependencies and we must to rewrite 
+Unfortunately it doesn't run out of the box due to outdated code and dependencies and we must to rewrite 
 some code and add utility methods. 
 
 ![Teaser Image](https://akanazawa.github.io/hmr/resources/images/teaser.png)
