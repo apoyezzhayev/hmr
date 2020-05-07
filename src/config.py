@@ -39,6 +39,7 @@ flags.DEFINE_string('pretrained_model_path', None,
                     'if not None, fine-tunes from this ckpt')
 flags.DEFINE_integer('batch_size', 8,
                      'Input image size to the network after preprocessing')
+flags.DEFINE_string('out_dir', 'results', 'Where result images will be saved')
 
 # Don't change if testing:
 flags.DEFINE_integer('img_size', 224,

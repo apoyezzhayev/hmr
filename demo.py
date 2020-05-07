@@ -24,6 +24,7 @@ import os
 import sys
 
 import matplotlib
+
 matplotlib.use('Agg')
 
 import numpy as np
@@ -31,6 +32,9 @@ import pandas as pd
 import skimage.io as io
 import tensorflow as tf
 from absl import flags
+import pickle
+
+from tqdm.autonotebook import tqdm
 
 import src.config
 from src.RunModel import RunModel
@@ -124,17 +128,66 @@ def preprocess_image(img_path, json_path=None):
     return crop, proc_param, img
 
 
+def out_name(out_dir, img_path, suffix=''):
+    shop_name = img_path.parent.name
+    out_path = os.path.join(str(out_dir), str(shop_name), str(img_path.with_suffix('').name + suffix))
+    if not os.path.exists(out_path):
+        Path(out_path).parent.mkdir(exist_ok=True, parents=True)
+    # print(out_dir, shop_name, img_path.with_suffix('').name + suffix)
+    return out_path
+
+
 def main(img_path, json_path=None, out_dir="hmr/output"):
+    if config.img_path.endswith('.csv'):
+        csv = pd.read_csv(config.img_path)
+    else:
+        raise NotImplementedError
+
     sess = tf.Session()
     model = RunModel(config, sess=sess)
 
-    input_img, proc_param, img = preprocess_image(img_path, json_path)
-    # Add batch dimension: 1 x D x D x 3
-    input_img = np.expand_dims(input_img, 0)
+    for ind, item in tqdm(csv.iterrows(), desc='Creating avatars'):
+        tqdm.write('Creating avatar for %s' % item.img_path)
+        out_dir = Path(out_dir)
+        img_path = Path(item.img_path)
+        json_path = Path(item.annot_path)
+        dump_path = out_name(out_dir, img_path, suffix='_verts.pkl')
 
-    joints, verts, cams, joints3d, theta = model.predict(
-        input_img, get_theta=True)
+        if Path(dump_path).exists():
+            tqdm.write('Avatar is already created')
+            continue
 
+        input_img, proc_param, img = preprocess_image(img_path, str(json_path))
+        # Add batch dimension: 1 x D x D x 3
+        input_img = np.expand_dims(input_img, 0)
+
+        joints, verts, cams, joints3d, theta = model.predict(
+            input_img, get_theta=True)
+
+        # Write outputs
+        joints_csv = os.path.join(str(out_dir), "csv/", os.path.splitext(os.path.basename(str(img_path)))[0] + ".csv")
+        export_joints(joints3d, joints_csv)
+        #     pose = pd.DataFrame(theta[:, 3:75])
+
+        #     pose.to_csv("hmr/output/theta_test.csv", header=None, index=None)
+
+        #     print('THETA:', pose.shape, pose)
+
+        #     import cv2
+        #     rotations = [cv2.Rodrigues(aa)[0] for aa in pose.reshape(-1, 3)]
+        #     print('ROTATIONS:', rotations)
+        out_images_dir = os.path.join(str(out_dir), "images")
+
+        # measure(theta[0][0], verts[0][0])  # view, batch
+
+        # Write avatar
+        with open(str(dump_path), 'wb') as f:
+            tqdm.write('Vertices dump was written to %s' % dump_path)
+            pickle.dump(verts, f)
+
+        visualize(str(img_path), img, proc_param, joints[0], verts[0], cams[0], output=str(out_images_dir))
+
+def export_joints(joints3d, file):
     joints_names = ['Ankle.R_x', 'Ankle.R_y', 'Ankle.R_z',
                     'Knee.R_x', 'Knee.R_y', 'Knee.R_z',
                     'Hip.R_x', 'Hip.R_y', 'Hip.R_z',
@@ -160,13 +213,6 @@ def main(img_path, json_path=None, out_dir="hmr/output"):
 
     joints_export.iloc[:, 1::3] = joints_export.iloc[:, 1::3] * -1
     joints_export.iloc[:, 2::3] = joints_export.iloc[:, 2::3] * -1
-
-    #     col_list = list(joints_export)
-
-    #     col_list[1::3], col_list[2::3] = col_list[2::3], col_list[1::3]
-
-    #     joints_export = joints_export[col_list]
-
     hipCenter = joints_export.loc[:][['Hip.R_x', 'Hip.R_y', 'Hip.R_z',
                                       'Hip.L_x', 'Hip.L_y', 'Hip.L_z']]
 
@@ -174,19 +220,7 @@ def main(img_path, json_path=None, out_dir="hmr/output"):
     joints_export['hip.Center_y'] = hipCenter.iloc[0][1::3].sum() / 2
     joints_export['hip.Center_z'] = hipCenter.iloc[0][2::3].sum() / 2
 
-    joints_export.to_csv(os.path.join(out_dir, "csv/", os.path.splitext(os.path.basename(img_path))[0] + ".csv"))
-    #     pose = pd.DataFrame(theta[:, 3:75])
-
-    #     pose.to_csv("hmr/output/theta_test.csv", header=None, index=None)
-
-    #     print('THETA:', pose.shape, pose)
-
-    #     import cv2
-    #     rotations = [cv2.Rodrigues(aa)[0] for aa in pose.reshape(-1, 3)]
-    #     print('ROTATIONS:', rotations)
-    out_images_dir = os.path.join(out_dir, "images")
-    visualize(img_path, img, proc_param, joints[0], verts[0], cams[0], output=out_images_dir)
-
+    joints_export.to_csv(file)
 
 def join_csv(csv_dir, csv_joined_dir):
     all_files = glob.glob(os.path.join(csv_dir, "*.csv"))
@@ -199,7 +233,10 @@ def join_csv(csv_dir, csv_joined_dir):
 
 
 if __name__ == '__main__':
-    out_dir = Path("hmr/output")
+    config = flags.FLAGS
+    config(sys.argv)
+
+    out_dir = Path(config.out_dir)
     csv_dir = out_dir / 'csv'
     csv_joined = out_dir / 'csv_joined'
     img_dir = out_dir / 'images'
@@ -207,8 +244,6 @@ if __name__ == '__main__':
     csv_joined.mkdir(parents=True, exist_ok=True)
     img_dir.mkdir(parents=True, exist_ok=True)
 
-    config = flags.FLAGS
-    config(sys.argv)
     # Using pre-trained model, change this to use your own.
     config.load_path = src.config.PRETRAINED_MODEL
 
@@ -219,5 +254,3 @@ if __name__ == '__main__':
     main(config.img_path, config.json_path, str(out_dir))
 
     join_csv(str(csv_dir), str(csv_joined))
-
-    print('\nResult is in hmr/output (you can open images in Colaboratory by double-clicking them)')
