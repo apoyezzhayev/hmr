@@ -14,14 +14,16 @@ Use this prepared Docker image:
 ### Demo
 
 1. Download the pre-trained models
+
 ```
 wget https://people.eecs.berkeley.edu/~kanazawa/cachedir/hmr/models.tar.gz && tar -xf models.tar.gz
 ```
 
 2. Run the demo
+Use `openpose` for generation of keypoints jsons to make an estimate of proper cropping. Specify the output
+`.csv` of openpose as input to the reconstruction
 ```
-python -m demo --img_path data/coco1.png
-python -m demo --img_path data/im1954.jpg
+python -m demo --img_path {path to csv with pairs}  --out_dir {output_directory}
 ```
 
 Images should be tightly cropped, where the height of the person is roughly 150px.
