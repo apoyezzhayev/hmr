@@ -2,7 +2,7 @@
 
 This repository is adaptation of HMR model for our purposes, 
 based on [this project](https://akanazawa.github.io/hmr/). 
-Unfortunately it doesn't run out of the box due to outdated code adn dependencies and we must to rewrite 
+Unfortunately it doesn't run out of the box due to outdated code and dependencies and we must to rewrite 
 some code and add utility methods. 
 
 ![Teaser Image](https://akanazawa.github.io/hmr/resources/images/teaser.png)
@@ -14,15 +14,19 @@ Use this prepared Docker image:
 ### Demo
 
 1. Download the pre-trained models
+
 ```
 wget https://people.eecs.berkeley.edu/~kanazawa/cachedir/hmr/models.tar.gz && tar -xf models.tar.gz
 ```
 
 2. Run the demo
+Use `openpose` for generation of keypoints jsons to make an estimate of proper cropping. Specify the output
+`.csv` of openpose as input to the reconstruction
 ```
-python -m demo --img_path data/coco1.png
-python -m demo --img_path data/im1954.jpg
+python -m demo --img_path {path to csv with pairs}  --out_dir {output_directory}
 ```
+**!NB: Use the same `data` mount path as in openpose container to match absolute paths in 
+`.csv` file **
 
 Images should be tightly cropped, where the height of the person is roughly 150px.
 On images that are not tightly cropped, you can run

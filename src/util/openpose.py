@@ -10,7 +10,7 @@ def read_json(json_path):
         data = json.load(f)
     kps = []
     for people in data['people']:
-        kp = np.array(people['pose_keypoints']).reshape(-1, 3)
+        kp = np.array(people['pose_keypoints_2d']).reshape(-1, 3)
         kps.append(kp)
     return kps
 
