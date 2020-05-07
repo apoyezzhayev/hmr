@@ -58,8 +58,10 @@ def visualize(img_path, img, proc_param, joints, verts, cam, output):
 
     # Render results
     skel_img = vis_util.draw_skeleton(img, joints_orig)
+    # TODO: add alpha to avatar
     rend_img_overlay = renderer(
-        vert_shifted, cam=cam_for_render, img=img, do_alpha=True)
+        vert_shifted, cam=cam_for_render, img=skel_img, do_alpha=True)
+    # rend_img_overlay = vis_util.draw_skeleton(rend_img_overlay, joints_orig)
     rend_img = renderer(
         vert_shifted, cam=cam_for_render, img_size=img.shape[:2])
     rend_img_vp1 = renderer.rotated(
@@ -69,7 +71,7 @@ def visualize(img_path, img, proc_param, joints, verts, cam, output):
 
     import matplotlib.pyplot as plt
     # plt.ion()
-    plt.figure(1)
+    plt.figure(1, figsize=(10, 10))
     plt.clf()
     plt.subplot(231)
     plt.imshow(img)
@@ -98,6 +100,7 @@ def visualize(img_path, img, proc_param, joints, verts, cam, output):
     plt.draw()
     print('saving to %s' % output)
     plt.savefig(os.path.join(output, os.path.splitext(os.path.basename(img_path))[0] + ".png"))
+    io.imsave(os.path.join(output, os.path.splitext(os.path.basename(img_path))[0] + "_big.png"), rend_img_overlay)  # rend_img[:,:,:3])#
     # import ipdb
     # ipdb.set_trace()
 

@@ -25,6 +25,8 @@ Use `openpose` for generation of keypoints jsons to make an estimate of proper c
 ```
 python -m demo --img_path {path to csv with pairs}  --out_dir {output_directory}
 ```
+**!NB: Use the same `data` mount path as in openpose container to match absolute paths in 
+`.csv` file **
 
 Images should be tightly cropped, where the height of the person is roughly 150px.
 On images that are not tightly cropped, you can run
